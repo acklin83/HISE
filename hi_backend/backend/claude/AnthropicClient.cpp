@@ -90,7 +90,12 @@ void AnthropicClient::run()
     url = url.withPOSTData(jsonBody);
 
     juce::String extraHeaders;
-    extraHeaders << "x-api-key: " << currentApiKey << "\r\n";
+
+    if (currentApiKey.startsWith("sk-ant-oat"))
+        extraHeaders << "Authorization: Bearer " << currentApiKey << "\r\n";
+    else
+        extraHeaders << "x-api-key: " << currentApiKey << "\r\n";
+
     extraHeaders << "anthropic-version: 2023-06-01\r\n";
     extraHeaders << "content-type: application/json\r\n";
 
