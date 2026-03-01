@@ -38,8 +38,6 @@ public:
 
     SET_PANEL_NAME("ClaudeChat");
 
-    Component* getComponent() override { return this; }
-
     void resized() override;
     void paint(juce::Graphics& g) override;
 
