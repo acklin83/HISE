@@ -162,8 +162,18 @@ void ClaudeChatPanel::sendCurrentMessage()
         return;
     }
 
-    // TODO Step 5: inject current script context here
     juce::String messageContent = text;
+
+    if (includeScriptToggle.getToggleState())
+    {
+        juce::String scriptContext = getCurrentScriptContent();
+        if (scriptContext.isNotEmpty())
+        {
+            messageContent = "Here is my current script:\n```javascript\n"
+                           + scriptContext
+                           + "\n```\n\nMy question: " + text;
+        }
+    }
 
     appendMessage("You", text);
     inputEditor.clear();
@@ -248,6 +258,37 @@ void ClaudeChatPanel::showChatView()
     clearButton.setVisible(true);
     includeScriptToggle.setVisible(true);
     resized();
+}
+
+juce::String ClaudeChatPanel::getCurrentScriptContent()
+{
+    auto* mc = getMainController();
+    if (mc == nullptr)
+        return {};
+
+    juce::String allScripts;
+
+    Processor::Iterator<JavascriptProcessor> iter(mc->getMainSynthChain());
+
+    while (auto* jsp = iter.getNextProcessor())
+    {
+        for (int i = 0; i < jsp->getNumSnippets(); ++i)
+        {
+            auto* snippet = jsp->getSnippet(i);
+            if (snippet != nullptr && !snippet->isSnippetEmpty())
+            {
+                if (allScripts.isNotEmpty())
+                    allScripts << "\n\n";
+
+                allScripts << "// " << snippet->getCallbackName().toString() << "\n";
+                allScripts << snippet->getAllContent();
+            }
+        }
+
+        break; // Only get the first JavascriptProcessor (main script)
+    }
+
+    return allScripts;
 }
 
 } // namespace hise

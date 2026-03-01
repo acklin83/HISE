@@ -63,6 +63,7 @@ private:
     void appendMessage(const juce::String& role, const juce::String& text);
     void showApiKeyEntry();
     void showChatView();
+    juce::String getCurrentScriptContent();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ClaudeChatPanel)
 };
