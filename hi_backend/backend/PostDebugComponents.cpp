@@ -551,6 +551,7 @@ bool FloatingTileContent::Factory::handleBackendMenu(PopupMenuOptions r, Floatin
 	case PopupMenuOptions::AutomationDataBrowser: parent->setNewContent(GET_PANEL_NAME(GenericPanel<AutomationDataBrowser>)); return true;
 	case PopupMenuOptions::FileBrowser:			parent->setNewContent(GET_PANEL_NAME(GenericPanel<FileBrowser>)); return true;
 	case PopupMenuOptions::SamplePoolTable:		parent->setNewContent(GET_PANEL_NAME(GenericPanel<SamplePoolTable>)); return true;
+	case PopupMenuOptions::ClaudeChat:			parent->setNewContent(GET_PANEL_NAME(ClaudeChatPanel)); return true;
 	}
 
 	return false;

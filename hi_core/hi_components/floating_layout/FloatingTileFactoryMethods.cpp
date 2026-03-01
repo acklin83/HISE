@@ -560,6 +560,7 @@ void FloatingTileContent::Factory::handlePopupMenu(PopupMenu& m, FloatingTile* p
 			addToPopupMenu(m, PopupMenuOptions::ServerController, "Server Controller");
 			addToPopupMenu(m, PopupMenuOptions::ScriptBroadcasterMap, "ScriptBroadcaster Map");
 			addToPopupMenu(m, PopupMenuOptions::SnexEditor, "SNEX Editor");
+			addToPopupMenu(m, PopupMenuOptions::ClaudeChat, "Claude Chat");
 
 			m.addSectionHeader("Sampler Tools");
 
