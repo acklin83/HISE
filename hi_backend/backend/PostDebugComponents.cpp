@@ -534,6 +534,7 @@ void FloatingTileContent::Factory::registerBackendPanelTypes()
 	registerType<OSCLogger>(PopupMenuOptions::OSCLogger);
 	registerType<ScriptComponentEditPanel::Panel>(PopupMenuOptions::ScriptComponentEditPanel);
 	registerType<ScriptComponentCSSDebugger>(PopupMenuOptions::ScriptComponentCSSDebugger);
+	registerType<ClaudeChatPanel>(PopupMenuOptions::ClaudeChat);
 	registerType<ApplicationCommandButtonPanel>(PopupMenuOptions::MenuCommandOffset);
 }
 

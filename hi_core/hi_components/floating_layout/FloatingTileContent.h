@@ -406,6 +406,7 @@ public:
 			SnexTestDataInfo,
 			SnexComplexTestData,
 			SnexWorkbenchPlayer,
+			ClaudeChat,
 			MenuCommandOffset = 10000,
 			numOptions
 		};

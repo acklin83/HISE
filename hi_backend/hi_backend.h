@@ -92,6 +92,8 @@ If true, then the patch browser will display global modulator connections.
 #endif
 #include "snex_workbench/WorkbenchProcessor.h"
 
-
+#include "backend/claude/ApiKeyManager.h"
+#include "backend/claude/AnthropicClient.h"
+#include "backend/claude/ClaudeChatPanel.h"
 
 #endif   // HI_BACKEND_INCLUDED

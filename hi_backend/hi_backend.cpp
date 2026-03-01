@@ -101,6 +101,9 @@
 
 
 
+#include "backend/claude/AnthropicClient.cpp"
+#include "backend/claude/ClaudeChatPanel.cpp"
+
 #if HISE_INCLUDE_SNEX
 #include "snex_workbench/DspNetworkWorkbench.cpp"
 #endif
