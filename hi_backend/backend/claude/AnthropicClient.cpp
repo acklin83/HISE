@@ -42,7 +42,8 @@ void AnthropicClient::sendMessage(const juce::String& apiKey,
                                    const juce::Array<Message>& messages,
                                    const juce::String& systemPrompt,
                                    std::function<void(juce::String)> onResponse,
-                                   std::function<void(juce::String)> onError)
+                                   std::function<void(juce::String)> onError,
+                                   std::function<void(juce::String)> onStreamDelta)
 {
     if (isThreadRunning())
         return;
@@ -52,16 +53,22 @@ void AnthropicClient::sendMessage(const juce::String& apiKey,
     currentSystemPrompt = systemPrompt;
     responseCallback = onResponse;
     errorCallback = onError;
+    streamDeltaCallback = onStreamDelta;
 
     startThread();
 }
 
 void AnthropicClient::run()
 {
+    bool useStreaming = streamDeltaCallback != nullptr;
+
     // Build JSON request
     juce::DynamicObject::Ptr requestObj = new juce::DynamicObject();
     requestObj->setProperty("model", "claude-sonnet-4-5-20250514");
     requestObj->setProperty("max_tokens", 4096);
+
+    if (useStreaming)
+        requestObj->setProperty("stream", true);
 
     if (currentSystemPrompt.isNotEmpty())
         requestObj->setProperty("system", currentSystemPrompt);
@@ -105,11 +112,7 @@ void AnthropicClient::run()
         return;
     }
 
-    juce::String response = stream->readEntireStreamAsString();
-
-    if (threadShouldExit())
-        return;
-
+    // Error handling for non-200 status codes
     if (statusCode == 401)
     {
         juce::MessageManager::callAsync([cb = errorCallback]()
@@ -130,6 +133,7 @@ void AnthropicClient::run()
 
     if (statusCode != 200)
     {
+        juce::String response = stream->readEntireStreamAsString();
         juce::MessageManager::callAsync([cb = errorCallback, statusCode, response]()
         {
             if (cb) cb("API error (HTTP " + juce::String(statusCode) + "): " + response);
@@ -137,7 +141,19 @@ void AnthropicClient::run()
         return;
     }
 
-    // Parse response JSON
+    if (useStreaming)
+        runStreaming(stream.get());
+    else
+        runNonStreaming(stream.get(), statusCode);
+}
+
+void AnthropicClient::runNonStreaming(juce::InputStream* stream, int statusCode)
+{
+    juce::String response = stream->readEntireStreamAsString();
+
+    if (threadShouldExit())
+        return;
+
     auto parsed = juce::JSON::parse(response);
     auto content = parsed.getProperty("content", juce::var());
 
@@ -154,6 +170,83 @@ void AnthropicClient::run()
     juce::MessageManager::callAsync([cb = responseCallback, responseText]()
     {
         if (cb) cb(responseText);
+    });
+}
+
+void AnthropicClient::runStreaming(juce::InputStream* stream)
+{
+    juce::String fullResponse;
+    juce::String lineBuffer;
+
+    while (!threadShouldExit())
+    {
+        char c;
+        if (stream->read(&c, 1) != 1)
+            break;
+
+        if (c == '\n')
+        {
+            auto line = lineBuffer.trim();
+            lineBuffer.clear();
+
+            if (line.startsWith("data: "))
+            {
+                auto jsonStr = line.substring(6);
+
+                if (jsonStr == "[DONE]")
+                    break;
+
+                auto parsed = juce::JSON::parse(jsonStr);
+                auto type = parsed.getProperty("type", "").toString();
+
+                if (type == "content_block_delta")
+                {
+                    auto delta = parsed.getProperty("delta", juce::var());
+                    auto deltaType = delta.getProperty("type", "").toString();
+
+                    if (deltaType == "text_delta")
+                    {
+                        auto text = delta.getProperty("text", "").toString();
+                        fullResponse += text;
+
+                        juce::MessageManager::callAsync([cb = streamDeltaCallback, text]()
+                        {
+                            if (cb) cb(text);
+                        });
+                    }
+                }
+                else if (type == "message_stop")
+                {
+                    break;
+                }
+                else if (type == "error")
+                {
+                    auto error = parsed.getProperty("error", juce::var());
+                    auto errorMsg = error.getProperty("message", "Unknown streaming error").toString();
+
+                    juce::MessageManager::callAsync([cb = errorCallback, errorMsg]()
+                    {
+                        if (cb) cb(errorMsg);
+                    });
+                    return;
+                }
+            }
+        }
+        else
+        {
+            lineBuffer += c;
+        }
+    }
+
+    if (threadShouldExit())
+        return;
+
+    if (fullResponse.isEmpty())
+        fullResponse = "(Empty response from Claude)";
+
+    juce::MessageManager::callAsync([cb = responseCallback, fullResponse]()
+    {
+        if (cb) cb(fullResponse);
     });
 }
 

@@ -184,41 +184,54 @@ void ClaudeChatPanel::sendCurrentMessage()
     conversationHistory.add(userMsg);
 
     isWaitingForResponse = true;
+    streamingResponse.clear();
     sendButton.setEnabled(false);
     inputEditor.setEnabled(false);
-    appendMessage("Claude", "Thinking...");
+    appendMessage("Claude", "");
 
     client.sendMessage(apiKey, conversationHistory, claudeSystemPrompt,
+        // onResponse — called when streaming finishes with full text
         [this](const juce::String& response)
         {
-            // Remove "Thinking..." placeholder
-            auto currentText = messageDisplay.getText();
-            currentText = currentText.upToLastOccurrenceOf("Claude: Thinking...", false, false);
-            messageDisplay.setText(currentText, juce::dontSendNotification);
-
-            appendMessage("Claude", response);
-
             AnthropicClient::Message assistantMsg;
             assistantMsg.role = "assistant";
             assistantMsg.content = response;
             conversationHistory.add(assistantMsg);
 
             isWaitingForResponse = false;
+            streamingResponse.clear();
             sendButton.setEnabled(true);
             inputEditor.setEnabled(true);
             inputEditor.grabKeyboardFocus();
         },
+        // onError
         [this](const juce::String& error)
         {
+            // Remove empty "Claude: " if streaming hadn't started
             auto currentText = messageDisplay.getText();
-            currentText = currentText.upToLastOccurrenceOf("Claude: Thinking...", false, false);
-            messageDisplay.setText(currentText, juce::dontSendNotification);
+            if (currentText.endsWith("Claude: "))
+            {
+                currentText = currentText.dropLastCharacters(9);
+                messageDisplay.setText(currentText, juce::dontSendNotification);
+            }
 
             appendMessage("Error", error);
 
             isWaitingForResponse = false;
+            streamingResponse.clear();
             sendButton.setEnabled(true);
             inputEditor.setEnabled(true);
+        },
+        // onStreamDelta — called for each text chunk
+        [this](const juce::String& delta)
+        {
+            streamingResponse += delta;
+
+            // Update the last "Claude: " message in-place
+            auto currentText = messageDisplay.getText();
+            auto prefix = currentText.upToLastOccurrenceOf("Claude: ", true, false);
+            messageDisplay.setText(prefix + streamingResponse, juce::dontSendNotification);
+            messageDisplay.moveCaretToEnd();
         });
 }
 

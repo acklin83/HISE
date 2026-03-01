@@ -58,6 +58,7 @@ private:
     juce::Array<AnthropicClient::Message> conversationHistory;
     AnthropicClient client;
     bool isWaitingForResponse = false;
+    juce::String streamingResponse;
 
     void sendCurrentMessage();
     void appendMessage(const juce::String& role, const juce::String& text);

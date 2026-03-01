@@ -46,7 +46,8 @@ public:
                      const juce::Array<Message>& messages,
                      const juce::String& systemPrompt,
                      std::function<void(juce::String)> onResponse,
-                     std::function<void(juce::String)> onError);
+                     std::function<void(juce::String)> onError,
+                     std::function<void(juce::String)> onStreamDelta = nullptr);
 
     void run() override;
 
@@ -56,6 +57,10 @@ private:
     juce::String currentSystemPrompt;
     std::function<void(juce::String)> responseCallback;
     std::function<void(juce::String)> errorCallback;
+    std::function<void(juce::String)> streamDeltaCallback;
+
+    void runStreaming(juce::InputStream* stream);
+    void runNonStreaming(juce::InputStream* stream, int statusCode);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AnthropicClient)
 };
