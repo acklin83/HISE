@@ -45,7 +45,7 @@ namespace hise { using namespace juce;
 
 /** Change this value if you need more than 8 stereo channels in HISE routing. */
 #ifndef NUM_MAX_CHANNELS
-#define NUM_MAX_CHANNELS 16
+#define NUM_MAX_CHANNELS 64
 #endif
 
 #if NUM_MAX_CHANNELS % 2 != 0

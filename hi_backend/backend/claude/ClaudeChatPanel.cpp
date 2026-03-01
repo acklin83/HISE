@@ -77,12 +77,21 @@ ClaudeChatPanel::ClaudeChatPanel(FloatingTile* parent)
     };
     addAndMakeVisible(clearButton);
 
+    // Change key button
+    changeKeyButton.setButtonText("Key");
+    changeKeyButton.onClick = [this]()
+    {
+        ApiKeyManager::clearApiKey();
+        showApiKeyEntry();
+    };
+    addAndMakeVisible(changeKeyButton);
+
     // Include script toggle
     includeScriptToggle.setButtonText("Include current script");
     addAndMakeVisible(includeScriptToggle);
 
     // API key entry
-    apiKeyLabel.setText("Enter your Anthropic API key:", juce::dontSendNotification);
+    apiKeyLabel.setText("Enter your Anthropic API or CLI token:", juce::dontSendNotification);
     apiKeyLabel.setColour(juce::Label::textColourId, juce::Colour(0xFFD4D4D4));
     addChildComponent(apiKeyLabel);
 
@@ -129,6 +138,8 @@ void ClaudeChatPanel::resized()
 
     auto toggleRow = bottomArea.removeFromTop(24);
     includeScriptToggle.setBounds(toggleRow.removeFromLeft(200));
+    changeKeyButton.setBounds(toggleRow.removeFromRight(40));
+    toggleRow.removeFromRight(4);
     clearButton.setBounds(toggleRow.removeFromRight(60));
 
     bottomArea.removeFromTop(4);
@@ -251,6 +262,7 @@ void ClaudeChatPanel::showApiKeyEntry()
     inputEditor.setVisible(false);
     sendButton.setVisible(false);
     clearButton.setVisible(false);
+    changeKeyButton.setVisible(false);
     includeScriptToggle.setVisible(false);
 
     apiKeyLabel.setVisible(true);
@@ -269,6 +281,7 @@ void ClaudeChatPanel::showChatView()
     inputEditor.setVisible(true);
     sendButton.setVisible(true);
     clearButton.setVisible(true);
+    changeKeyButton.setVisible(true);
     includeScriptToggle.setVisible(true);
     resized();
 }

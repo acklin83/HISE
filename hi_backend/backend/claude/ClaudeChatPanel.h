@@ -47,6 +47,7 @@ private:
     juce::TextEditor inputEditor;
     juce::TextButton sendButton;
     juce::TextButton clearButton;
+    juce::TextButton changeKeyButton;
     juce::ToggleButton includeScriptToggle;
 
     // API key entry (shown when no key configured)
