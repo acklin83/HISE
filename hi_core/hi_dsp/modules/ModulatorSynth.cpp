@@ -1,3 +1,4 @@
+#include <cstdio>
 /*  ===========================================================================
 *
 *   This file is part of HISE.
@@ -429,6 +430,7 @@ void ModulatorSynth::startSynthTimer(int index, double interval, int timeStamp)
 		const double timeStampSeconds = getSampleRate() > 0.0 ? (double)timeStamp / getSampleRate() : 0.0;
 
 		if (interval != 0.0) nextTimerCallbackTimes[index] = thisUptime + timeStampSeconds + synthTimerIntervals[index];
+
 	}
 	else jassertfalse;
 }
@@ -493,6 +495,19 @@ void ModulatorSynth::processHiseEventBuffer(const HiseEventBuffer &inputBuffer, 
 	if (checkTimerCallback(1, numSamples)) synthTimerCallback(1, numSamples);
 	if (checkTimerCallback(2, numSamples)) synthTimerCallback(2, numSamples);
 	if (checkTimerCallback(3, numSamples)) synthTimerCallback(3, numSamples);
+
+	// Direct note injection for Linux standalone (bypasses timer→script→artificialEvents chain)
+	{
+		int pn = pendingNoteInjection.note.exchange(-1);
+		if (pn >= 0 && getMainController()->getMainSynthChain() == this)
+		{
+			int pv = pendingNoteInjection.vel.load();
+			int pc = pendingNoteInjection.channel.load();
+			HiseEvent noteOn(HiseEvent::Type::NoteOn, (uint8)pn, (uint8)pv, (uint8)pc);
+			noteOn.setTimeStamp(0);
+			eventBuffer.addEvent(noteOn);
+		}
+	}
 
 	if (getMainController()->getMainSynthChain() == this)
 	{
@@ -575,6 +590,7 @@ void ModulatorSynth::renderNextBlockWithModulators(AudioSampleBuffer& outputBuff
 
 	HiseEvent m;
 	int midiEventPos;
+
 
 	while (numSamples > 0)
 	{

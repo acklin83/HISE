@@ -5733,6 +5733,30 @@ void ScriptingApi::Synth::startTimer(double intervalInSeconds)
 		}
 
 		owner->startSynthTimer(parentMidiProcessor->getIndexInChain(), intervalInSeconds, timestamp);
+
+		// debug removed
+		// Read pendingPreviewNote reg variable on UI thread (same thread that just set it)
+		// and store atomically for audio thread to inject as NoteOn
+		if (auto* jsp = dynamic_cast<JavascriptMidiProcessor*>(parentMidiProcessor))
+		{
+			if (auto* engine = jsp->getScriptEngine())
+			{
+				int regIdx = dynamic_cast<HiseJavascriptEngine::RootObject*>(engine->getRootObject())->hiseSpecialData.varRegister.getRegisterIndex(Identifier("pendingPreviewNote"));
+				if (regIdx >= 0)
+				{
+					int noteVal = (int)dynamic_cast<HiseJavascriptEngine::RootObject*>(engine->getRootObject())->hiseSpecialData.varRegister.getFromRegister(regIdx);
+					if (noteVal >= 0 && noteVal <= 127)
+					{
+						int vels[] = {88, 104, 120};
+						int vel = vels[Random::getSystemRandom().nextInt(3)];
+						int ch = (owner->pendingNoteInjection.channel.load() % 16) + 1;
+						owner->pendingNoteInjection.channel.store(ch);
+						owner->pendingNoteInjection.vel.store(vel);
+						owner->pendingNoteInjection.note.store(noteVal);
+					}
+				}
+			}
+		}
 	}
 }
 

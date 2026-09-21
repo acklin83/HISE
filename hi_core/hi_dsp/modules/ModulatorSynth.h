@@ -178,6 +178,10 @@ public:
 	*/
 	virtual void renderNextBlockWithModulators(AudioSampleBuffer& outputAudio, const HiseEventBuffer& inputMidi);
 
+	// Lock-free note injection for standalone
+	struct PendingNote { std::atomic<int> note{-1}; std::atomic<int> vel{0}; std::atomic<int> channel{1}; };
+	PendingNote pendingNoteInjection;
+
 	/** This method is called to handle all modulatorchains just before the voice rendering. */
 	virtual void preVoiceRendering(int startSample, int numThisTime);;
 
@@ -552,6 +556,8 @@ private:
 	std::atomic<bool> bypassState;
 
     bool anyTimerActive = false;
+    
+
 
 	hise::UnorderedStack<SoundCollectorBase::SpecialStart> delayedSounds;
 	hise::UnorderedStack<uint16> delayedSoundEventIds;
