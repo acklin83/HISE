@@ -287,7 +287,25 @@ public:
 	bool moreThanOneInstanceAllowed() override       { return true; }
 
 
-	void initialise(const String& /*commandLine*/) override { mainWindow = new MainWindow(getApplicationName()); }
+	void initialise(const String& /*commandLine*/) override { mainWindow = new MainWindow(getWindowTitle()); }
+
+	/** The title of the standalone window.
+
+		getApplicationName() returns the project name, which also names the app-data
+		folder (licence, settings, sample location) and must not change between
+		versions. HISE_STANDALONE_TITLE overrides only the window title. It has to be
+		a bare token - the exporter writes extra definitions raw into an attribute of
+		the generated .jucer, so quotes and spaces break the export - with '_'
+		standing for a space: HISE_STANDALONE_TITLE=Drums_de_Lion.
+	*/
+	String getWindowTitle()
+	{
+#ifdef HISE_STANDALONE_TITLE
+		return String(JUCE_STRINGIFY(HISE_STANDALONE_TITLE)).replaceCharacter('_', ' ');
+#else
+		return getApplicationName();
+#endif
+	}
 	void shutdown() override 
 	{
 #if JUCE_WINDOWS
