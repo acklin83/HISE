@@ -497,6 +497,7 @@ void ModulatorSynth::processHiseEventBuffer(const HiseEventBuffer &inputBuffer, 
 	if (checkTimerCallback(3, numSamples)) synthTimerCallback(3, numSamples);
 
 	// Direct note injection for Linux standalone (bypasses timer→script→artificialEvents chain)
+#if JUCE_LINUX
 	{
 		int pn = pendingNoteInjection.note.exchange(-1);
 		if (pn >= 0 && getMainController()->getMainSynthChain() == this)
@@ -508,6 +509,7 @@ void ModulatorSynth::processHiseEventBuffer(const HiseEventBuffer &inputBuffer, 
 			eventBuffer.addEvent(noteOn);
 		}
 	}
+#endif
 
 	if (getMainController()->getMainSynthChain() == this)
 	{

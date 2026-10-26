@@ -5736,7 +5736,11 @@ void ScriptingApi::Synth::startTimer(double intervalInSeconds)
 
 		// debug removed
 		// Read pendingPreviewNote reg variable on UI thread (same thread that just set it)
-		// and store atomically for audio thread to inject as NoteOn
+		// and store atomically for audio thread to inject as NoteOn.
+		// Linux only: there the script's own onTimer never sees the new value, so this
+		// is the only preview hit. On macOS and Windows the script plays the preview
+		// itself, and injecting it here as well produced a second, random hit.
+#if JUCE_LINUX
 		if (auto* jsp = dynamic_cast<JavascriptMidiProcessor*>(parentMidiProcessor))
 		{
 			if (auto* engine = jsp->getScriptEngine())
@@ -5757,6 +5761,7 @@ void ScriptingApi::Synth::startTimer(double intervalInSeconds)
 				}
 			}
 		}
+#endif
 	}
 }
 
